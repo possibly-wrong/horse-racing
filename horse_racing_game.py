@@ -24,9 +24,9 @@ def p_win(p, n):
     return [p_win1(p[j:] + p[:j], n[j:] + n[:j]) for j in range(len(n))]
 
 # Scratch horses prior to race:
-#   Roll dice, scratch horse i with probability p[i].
+#   Roll dice, scratch horse i with probability ps[i].
 #   Repeat until s distinct horses have been scratched.
-#   Race remaining len(p)-s horses with normalized probabilities.
+#   Race remaining len(p)-s horses with normalized probabilities pr[i].
 
 def p_scratch(q):
     """Probability of scratching subset with dice probabilities q[:]."""
@@ -37,18 +37,18 @@ def p_scratch(q):
             a[i, j] -= p_roll
     return sympy.linsolve((a, sympy.eye(2 ** len(q))[:, -1])).args[0][0]
 
-def all_races(p, s):
-    """Distribution of all races with s scratches."""
-    for scratched in itertools.combinations(range(len(p)), s):
+def all_races(ps, pr, s):
+    """All races with s scratches, scratching with ps, racing with pr."""
+    for scratched in itertools.combinations(range(len(ps)), s):
         racing = [horse for horse in range(len(p)) if not horse in scratched]
-        p_total = sum(p[horse] for horse in racing)
-        yield (float(p_scratch([p[horse] for horse in scratched])),
+        p_total = sum(pr[horse] for horse in racing)
+        yield (float(p_scratch([ps[horse] for horse in scratched])),
                racing,
-               [float(p[horse] / p_total) for horse in racing])
+               [float(pr[horse] / p_total) for horse in racing])
 
 # Pre-compute all scratches of s=4 horses.
 p = [Fraction(n, 36) for n in [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1]]
-races = list(all_races(p, 4))
+races = list(all_races(p, p, 4))
 
 def eval_board(n):
     """Distribution of each horse winning considering scratched races."""
